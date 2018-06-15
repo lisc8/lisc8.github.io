@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>奇闻异事</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+
+    <!-- jQuery 3 -->
+    <script src="lib/jquery-3.3.1.min.js"></script>
+
+
+    <!-- Font Awesome -->
+    <!--<link rel="stylesheet" href="/stylesheets/font-awesome.min.css">-->
+
+    <link rel="stylesheet" href="index.css">
+    <!--<link rel="stylesheet" href="/stylesheets/style.css">-->
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        *{
+            margin:0;
+            padding:0;
+        }
+        ul,li{
+            list-style:none;
+        }
+        .box{
+            width:100%;
+            margin:0 auto;
+        }
+        .head {
+            height:60px;
+            line-height: 60px;
+            padding:0 20px;
+        }
+        .head span{
+            font-weight:bold;
+            font-size:26px;
+        }
+        .contentBox{
+            width:980px;
+            margin:0 auto;
+            background:#f0f0f0;
+            overflow: hidden;
+            padding:20px;
+        }
+        .title{
+            font-size:28px;
+            text-align: center;
+            line-height: 20px;
+        }
+        .timeBox,.authorBox{
+            text-align: center;
+        }
+        .time{
+            font-size:14px;
+            color:#666;
+        }
+        .author{
+            color:#666;
+            font-size:14px;
+            text-align: center;
+            display: inline-block;
+            margin:0 auto;
+            width:200px;
+            overflow:hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis
+        }
+        .main{
+            text-indent: 2em;
+            min-height: 200px;
+            margin:20px 0;
+        }
+        #content{
+            width:100%;
+            height:100px;
+            margin-top:10px;
+            resize:none;
+        }
+        #btn{
+            margin-top:6px;
+            float: right;
+        }
+        #discuss{
+            padding-top:20px;
+            clear:both;
+        }
+        #discuss li{
+            padding:6px;
+            border-bottom:1px dotted #999;
+        }
+        .p-author{
+            color:#666;
+            display: inline-block;
+            width:200px;
+            overflow:hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis
+        }
+        .p-time{
+            color:#666;
+            display: inline-block;
+            width:144px;
+            overflow:hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis
+        }
+        .text{
+            color:#666;
+            display: inline-block;
+            width:56px;
+            overflow:hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis
+        }
+        .detail{
+            font-family: '微软雅黑';
+        }
+    </style>
+</head>
+<body>
+<div class="box">
+    <div class="head"><span>奇闻异事</span> —  分享身边发生的有趣的事或者听到的不可思议的事！！！</div>
+    <div class="contentBox">
+        <h3 class="title"></h3>
+        <h5 class="timeBox">
+            <i class="time"></i>
+        </h5>
+        <h4 class="authorBox">
+            <i class="author"></i>
+        </h4>
+        <div class="main">
+
+        </div>
+        <div class="discuss">
+            <span style="border-bottom:1px solid #03F;color:#03F">评论</span>
+            <textarea name="things" id="content" placeholder="内容" class="form-control"></textarea>
+            <button id="btn" class="btn btn-primary">提交</button>
+            <ul id="discuss">
+
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script src=lib/jquery-3.3.1.min.js></script>
+<script src=lib/nebPay.min.js></script>
+<script src=lib/bootstrap.min.js></script>
+<script src=lib/nebulas.js></script>
+<script>
+    var nowTitle = sessionStorage.getItem('nowTitle');
+    var dataTime = JSON.parse(sessionStorage.getItem('dataTime'));
+    var dappAddress = "n1w2MBmbRTVFdDT4oZ9hhAdKp3Xu9YLtFQR";
+
+
+    var titleBox = $(".title");
+    var timeBox = $(".time");
+    var authorBox = $(".author");
+    var mainBox = $(".main");
+    var discussBox = $("#discuss");
+    var submitBtn = $("#btn");
+
+    var dbTitle;
+    var personDiscuss;
+
+    var nebulas = require("nebulas"),
+        Account = nebulas.Account,
+        neb = new nebulas.Neb();
+    neb.setRequest(new nebulas.HttpRequest("https://Mainnet.nebulas.io"));
+
+    var from = Account.NewAccount().getAddressString();
+    var value = "0";
+    var nonce = "0";
+    var gas_price = "1000000";
+    var gas_limit = "2000000";
+
+    var callFunction2 = "get";
+    var argTitle = nowTitle + '_' + dataTime;
+    var callArgs = JSON.stringify([argTitle]);  //推荐用 JSON.stringify 来生成参数字符串,这样会避免出错!
+    var contract = {
+        "function": callFunction2,
+        "args": callArgs
+    };
+
+    neb.api.call(from,dappAddress,value,nonce,gas_price,gas_limit,contract).then(function (resp) {
+        cbSearch(resp);
+
+    }).catch(function (err) {
+        console.log("error:" + err.message)
+    });
+
+    function cbSearch(resp){
+        var result = JSON.parse(resp.result);
+        dbTitle = result.title;
+        titleBox.html(nowTitle);
+        timeBox.html(result.date);
+        authorBox.html('作者:'+result.author);
+        mainBox.html(result.content);
+        var discussContent = result.leaveMsg;
+        if(discussContent == ''){
+            var li = $("<li style='text-align:center'></li>");
+            li.html('暂无评论');
+            discussBox.append(li);
+        }else{
+            var temp = [];
+            temp = discussContent.split('_');
+            for(var i=temp.length-2;i>=0;i--){
+                var li = $("<li></li>");
+                // li.html(temp[i]);
+
+                var personBox = $("<div></div>");
+                var detailBox = $("<div class='detail'></div>");
+                var author = $("<i class='p-author'></i>");
+                var text = $("<span class='text'>&nbsp;发表于 &nbsp;</span>");
+                var pTimeBox = $("<i class='p-time'></i>");
+                var infoArr = temp[i].split("|");
+                author.html('游客:'+infoArr[0]);
+                var time = new Date(parseInt(infoArr[1]));
+                time = time.toLocaleDateString() +' ' +time.toLocaleTimeString();
+                pTimeBox.html(time);
+                personBox.append(author).append(text).append(pTimeBox);
+                detailBox.html(infoArr[2]);
+                li.append(personBox).append(detailBox);
+                discussBox.append(li);
+
+
+
+            }
+        }
+
+    }
+
+
+    var NebPay = require("nebpay");     //https://github.com/nebulasio/nebPay
+    var nebPay = new NebPay();
+    var serialNumber;
+    var callbackUrl = NebPay.config.mainnetUrl;   //如果合约在主网,则使用这个
+    // var callbackUrl = NebPay.config.testnetUrl;   //
+
+    submitBtn.click(function(){
+        var disContent = $("#content").val();
+        if(disContent.indexOf('|')!=-1 || disContent.indexOf('_')!=-1){
+            alert('内容不能含有"|"或"_"等非法字符');
+            return;
+        }else{
+
+            var to = dappAddress;
+            var value = "0";
+            var callFunction = "leaveMessage";
+            var date = new Date().getTime();
+            personDiscuss = date +'|'+disContent;
+            var callArgs = JSON.stringify([dbTitle,disContent,date]);
+
+            serialNumber = nebPay.call(to, value, callFunction,callArgs,  {    //使用nebpay的call接口去调用合约,
+                listener: cbPush,       //设置listener, 处理交易返回信息
+                callback: callbackUrl
+            });
+
+            intervalQuery = setInterval(function () {
+                funcIntervalQuery();
+            }, 10000);
+        }
+    })
+
+    function cbDiscuss(resp){
+        var timer = setInterval(function(){
+            var callFunction2 = "get";
+            var argTitle = dbTitle;
+            var callArgs = JSON.stringify([argTitle]);  //推荐用 JSON.stringify 来生成参数字符串,这样会避免出错!
+            var contract = {
+                "function": callFunction2,
+                "args": callArgs
+            };
+
+            neb.api.call(from,dappAddress,value,nonce,gas_price,gas_limit,contract).then(function (resp) {
+                var result = JSON.parse(resp.result);
+
+                if(result.leaveMsg.indexOf(personDiscuss) != -1){
+                    clearInterval(timer);
+                    judge(result);
+                }
+            }).catch(function (err) {
+                console.log("error:" + err.message)
+            });
+        },2000);
+        function judge(resp){
+            alert('评论成功！');
+            $("#content").val('');
+            discussBox.empty();
+            var discussContent = resp.leaveMsg;
+            if(discussContent == ''){
+                var li = $("<li style='text-align:center'></li>");
+                li.html('暂无评论');
+                discussBox.append(li);
+            }else{
+                var temp = [];
+                temp = discussContent.split('_');
+                for(var i=temp.length-2;i>=0;i--){
+                    var li2 = $("<li></li>");
+                    // var personBox = $("<div></div>");
+                    // var detailBox = $("<div></div>");
+                    // var author = $("<div class='author'></div>");
+                    // var text = $("<div class='text'> 发表于 </div>");
+                    // var timeBox = $("<div class='time'></div>");
+                    // var infoArr = discussContent.split("|");
+                    // author.html(infoArr[0]);
+                    // var time = new Date(parseInt(infoArr[1]));
+                    // timeBox.html(time);
+                    // personBox.append(author).append(text).append(timeBox);
+                    // detailBox.html(infoArr[2]);
+                    // li2.append(personBox).append(detailBox);
+                    // discussBox.append(li2);
+
+
+                    var personBox = $("<div></div>");
+                    var detailBox = $("<div class='detail'></div>");
+                    var author = $("<i class='p-author'></i>");
+                    var text = $("<span class='text'>&nbsp;发表于 &nbsp;</span>");
+                    var pTimeBox = $("<i class='p-time'></i>");
+                    var infoArr = temp[i].split("|");
+                    author.html('游客:'+infoArr[0]);
+                    var time = new Date(parseInt(infoArr[1]));
+                    time = time.toLocaleDateString() +' ' +time.toLocaleTimeString();
+                    pTimeBox.html(time);
+                    personBox.append(author).append(text).append(pTimeBox);
+                    detailBox.html(infoArr[2]);
+                    li2.append(personBox).append(detailBox);
+                    discussBox.append(li2);
+                }
+            }
+        }
+    }
+
+    var intervalQuery;
+
+    function funcIntervalQuery() {
+        var options = {
+            callback: callbackUrl
+        }
+        nebPay.queryPayInfo(serialNumber,options)   //search transaction result from server (result upload to server by app)
+            .then(function (resp) {
+                console.log("tx result: " + resp)   //resp is a JSON string
+                var respObject = JSON.parse(resp)
+                if(respObject.code === 0){
+                    clearInterval(intervalQuery);
+                    cbDiscuss(respObject);
+                }
+            })
+            .catch(function (err) {
+                console.log(err);
+            });
+    }
+
+    function cbPush(resp) {
+        console.log("response of push: " + JSON.stringify(resp))
+        var respString = JSON.stringify(resp);
+        if(respString.search("rejected by user") !== -1){
+            clearInterval(intervalQuery);
+            alert(respString)
+        }else if(respString.search("txhash") !== -1){
+            // alert("wait for tx result: " + resp.txhash)
+        }
+    }
+
+
+
+</script>
+<!-- jQuery UI 1.11.4 -->
+<!--<script src="/javascripts/jquery-ui.min.js"></script>-->
+<!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+<script>
+    // $.widget.bridge('uibutton', $.ui.button);
+</script>
+<!--[if lt IE 9]>
+<script src="lib/html5shiv.min.js"></script>
+<script src="lib/respond.min.js"></script>
+<![endif]-->
+<!-- Bootstrap 3.3.7 -->
+<script src="lib/bootstrap.min.js"></script>
+</body>
+</html>

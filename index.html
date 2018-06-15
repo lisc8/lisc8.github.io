@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>奇闻异事</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+
+    <!-- jQuery 3 -->
+    <script src="lib/jquery-3.3.1.min.js"></script>
+
+
+    <!-- Font Awesome -->
+    <!--<link rel="stylesheet" href="/stylesheets/font-awesome.min.css">-->
+
+    <link rel="stylesheet" href="index.css">
+    <!--<link rel="stylesheet" href="/stylesheets/style.css">-->
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" />
+    <style>
+        *{
+            margin:0;
+            padding:0;
+        }
+        ul,li{
+            list-style:none;
+        }
+        .box{
+            width:100%;
+            margin:0 auto;
+            min-width:980px;
+        }
+        .head {
+            height:60px;
+            line-height: 60px;
+            padding:0 20px;
+        }
+        .head span{
+            font-weight:bold;
+            font-size:26px;
+        }
+        .left{
+            position:absolute;
+            width:300px;
+            left:0;
+            top:60px;
+            background:#ddd;
+            height:500px;
+            padding:12px;
+        }
+        .left textarea{
+            margin-top:6px;
+            resize: none;
+        }
+        .left button{
+            margin-top:6px;
+        }
+        .right{
+            position:relative;
+            padding:12px;
+            margin-left:310px;
+            /*height:600px;*/
+            background:#ddd;
+        }
+        .right h4 span{
+            border-bottom:1px solid #fff;
+        }
+        #list-box li{
+            height:60px;
+            background:#fff;
+            padding:6px;
+            margin-bottom:12px;
+        }
+        #list-box li span{
+            font-size:16px;
+            float: left;
+            cursor:pointer;
+            color: #5590e7;
+
+        }
+        #list-box li span:hover{
+             color: #6db7ff;
+         }
+        #list-box li i{
+            font-size:14px;
+            float: right;
+        }
+        .title-box{
+            overflow:hidden;
+        }
+        .title-box .title{
+            display: inline-block;
+            width:80%;
+            overflow:hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis
+        }
+        .author-name{
+            display: inline-block;
+            width:200px;
+            overflow:hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis
+        }
+        #box-shadow{
+            position:absolute;
+            z-index: 19891014;
+            background-color: rgb(66, 129, 148);
+            opacity: 0.3;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            display:none;
+        }
+        #wait{
+            position:absolute;
+            width:38px;
+            height:38px;
+            background:url("img/loading-1.gif") no-repeat;
+            top:50%;
+            left:50%;
+            margin-left:-19px;
+            margin-top:-19px;
+        }
+        #loadBtn{
+            height:40px;
+            line-height: 40px;
+            text-align: center;
+            background:#faf0f0;
+            cursor:pointer;
+            position:relative;
+        }
+        #box-shadow2{
+            position:absolute;
+            z-index: 19891014;
+            background-color: rgb(66, 129, 148);
+            opacity: 0.3;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            display:none;
+        }
+        #wait2{
+            position:absolute;
+            width:38px;
+            height:38px;
+            background:url("img/loading-1.gif") no-repeat;
+            top:50%;
+            left:50%;
+            margin-left:-19px;
+            margin-top:-19px;
+        }
+
+    </style>
+
+</head>
+
+<body class="hold-transition skin-blue">
+<div class="box">
+    <div class="head"><span>奇闻异事</span> —  分享身边发生的有趣的事或者听到的不可思议的事！！！</div>
+    <div class="left">
+        <h5>我也要分享</h5>
+        <input type="text" placeholder="标题" id="title" class="form-control">
+        <textarea name="things" id="content" cols="30" rows="10" placeholder="内容" class="form-control"></textarea>
+        <button id="write" class="btn btn-primary">上传</button>
+    </div>
+    <div class="right">
+        <h4><span>集锦</span></h4>
+        <ul id="list-box">
+
+        </ul>
+        <div id="loadBtn">
+            加载更多！
+            <div id="box-shadow2">
+                <div id="wait2"></div>
+            </div>
+        </div>
+        <div id="box-shadow">
+            <div id="wait"></div>
+        </div>
+    </div>
+
+</div>
+<button id="btn2">asfasfasf</button>
+
+
+
+
+<script src=lib/jquery-3.3.1.min.js></script>
+<script src=lib/nebPay.min.js></script>
+<script src=lib/bootstrap.min.js></script>
+<script src=lib/nebulas.js></script>
+<script>
+
+    var now;
+    var newCount=0;
+    var btn = $("#write");
+    var loadBtn = $("#loadBtn");
+    var ulBox = $("#list-box");
+    var boxShadow = $("#box-shadow");
+    var boxShadow2 = $("#box-shadow2");
+    var dappAddress = "n1w2MBmbRTVFdDT4oZ9hhAdKp3Xu9YLtFQR";
+
+
+    var nebulas = require("nebulas"),
+        Account = nebulas.Account,
+        neb = new nebulas.Neb();
+    neb.setRequest(new nebulas.HttpRequest("https://Mainnet.nebulas.io"));
+
+    var from = Account.NewAccount().getAddressString();
+    var value = "0";
+    var nonce = "0";
+    var gas_price = "1000000";
+    var gas_limit = "2000000";
+    var callFunction = "forEach";
+    var arg1 = 10;
+    var arg2 = 0;
+
+    getData();
+
+
+    function getData(){
+        //boxShadow.show();
+        var callArgs = JSON.stringify([arg1,arg2]);  //推荐用 JSON.stringify 来生成参数字符串,这样会避免出错!
+        var contract = {
+            "function": callFunction,
+            "args": callArgs
+        };
+        neb.api.call(from,dappAddress,value,nonce,gas_price,gas_limit,contract).then(function (resp) {
+            cbSearch(resp)
+        }).catch(function (err) {
+            console.log("error:" + err.message)
+        });
+    }
+
+
+    function cbSearch(result){
+        boxShadow2.hide();
+        result = JSON.parse(result.result);
+        result = JSON.parse(result);
+
+
+        for(var i=0;i<result.length;i++){
+            arg2 ++;
+            var temp = result[i];
+            var li = $("<li></li>");
+            var titleBox = $("<div class='title-box'></div>");
+            var span = $("<span class='title' onclick='getDetail(this)'></span>");
+            var dateBox = $("<i></i>");
+            var authorBox = $("<div class='author'></div>");
+            var authorName = $("<i class='author-name'></i>");
+            var index = temp.title.lastIndexOf('_');
+            span.html(temp.title.substring(0,index));
+            span.attr('data-time',temp.title.substring(index+1))
+            dateBox.html(temp.date);
+            authorName.html('作者：'+temp.author);
+            titleBox.append(span).append(dateBox);
+            authorBox.append(authorName);
+            li.append(titleBox).append(authorBox);
+            ulBox.append(li);
+
+        }
+
+    }
+    //详细内容
+    getDetail = function(self){
+        var title = $(self).text();
+        var dataTime =  $(self).attr('data-time');
+        sessionStorage.setItem('nowTitle',title);
+        sessionStorage.setItem('dataTime',dataTime);
+        window.open('detail.html');
+    };
+
+
+    var NebPay = require("nebpay");     //https://github.com/nebulasio/nebPay
+    var nebPay = new NebPay();
+    var serialNumber;
+    var callbackUrl = NebPay.config.mainnetUrl;   //如果合约在主网,则使用这个
+    // var callbackUrl = NebPay.config.testnetUrl;   //
+
+
+    var newTitle,newDate,newContent;
+
+    btn.click(function() {
+        now = new Date().getTime();
+        newDate = new Date().toLocaleDateString();
+        var to = dappAddress;
+        var value = "0";
+        var callFunction = "writeThings";
+        newTitle = $("#title").val();
+        var formatNewTitle = newTitle + '_' +now;
+        newContent = $("#content").val();
+
+        var callArgs = JSON.stringify([formatNewTitle,newContent,newDate]);
+
+        serialNumber = nebPay.call(to, value, callFunction,callArgs,  {    //使用nebpay的call接口去调用合约,
+            listener: cbPush,       //设置listener, 处理交易返回信息
+            callback: callbackUrl
+        });
+
+        intervalQuery = setInterval(function () {
+            funcIntervalQuery();
+        }, 10000);
+    });
+
+    loadBtn.click(function(){
+        for(var i=0;i<newCount;i++){
+            ulBox.find('li').eq(0).remove();
+        }
+        newCount = 0;
+        boxShadow2.show();
+        getData();
+    });
+
+    //插入新增数据
+    function insertNewContent(from){
+        var timer = setInterval(function(){
+            var callFunction2 = "get";
+            var argTitle = newTitle + '_' + now;
+            var callArgs = JSON.stringify([argTitle]);  //推荐用 JSON.stringify 来生成参数字符串,这样会避免出错!
+            var contract = {
+                "function": callFunction2,
+                "args": callArgs
+            };
+
+            neb.api.call(from,dappAddress,value,nonce,gas_price,gas_limit,contract).then(function (resp) {
+                if(resp.result!='null'){
+                    clearInterval(timer);
+                    judge(resp.result);
+                }
+            }).catch(function (err) {
+                console.log("error:" + err.message)
+            });
+        },2000);
+
+        function judge(resp){
+            newCount++;
+            alert('恭喜，上传成功！');
+            $("#title").val('');
+            $("#content").val('');
+            var result = JSON.parse(resp);
+            var li = $("<li></li>");
+            var titleBox = $("<div class='title-box'></div>");
+            var span = $("<span class='title' onclick='getDetail(this)'></span>");
+            var dateBox = $("<i></i>");
+            var authorBox = $("<div class='author'></div>");
+            var authorName = $("<i class='author-name'></i>");
+            var index = result.title.lastIndexOf('_');
+            span.html(result.title.substring(0,index));
+            span.attr('data-time',result.title.substring(index+1));
+            dateBox.html(result.date);
+            authorName.html('作者：'+result.author);
+            titleBox.append(span).append(dateBox);
+            authorBox.append(authorName);
+            li.append(titleBox).append(authorBox);
+            ulBox.prepend(li);
+
+        }
+
+    }
+
+    var intervalQuery;
+
+    function funcIntervalQuery() {
+        var options = {
+            callback: callbackUrl
+        }
+        nebPay.queryPayInfo(serialNumber,options)   //search transaction result from server (result upload to server by app)
+            .then(function (resp) {
+                console.log("tx result: " + resp)   //resp is a JSON string
+                var respObject = JSON.parse(resp)
+                if(respObject.code === 0){
+                    clearInterval(intervalQuery);
+                    var from = respObject.data.from;
+                    insertNewContent(from);
+                }
+            })
+            .catch(function (err) {
+                console.log(err);
+            });
+    }
+
+    function cbPush(resp) {
+        console.log("response of push: " + JSON.stringify(resp))
+        var respString = JSON.stringify(resp);
+        if(respString.search("rejected by user") !== -1){
+            clearInterval(intervalQuery);
+            alert(respString)
+        }else if(respString.search("txhash") !== -1){
+            // alert("wait for tx result: " + resp.txhash)
+        }
+    }
+
+
+</script>
+
+<!-- jQuery UI 1.11.4 -->
+<!--<script src="/javascripts/jquery-ui.min.js"></script>-->
+<!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+<script>
+    // $.widget.bridge('uibutton', $.ui.button);
+</script>
+<!--[if lt IE 9]>
+<script src="lib/html5shiv.min.js"></script>
+<script src="lib/respond.min.js"></script>
+<![endif]-->
+<!-- Bootstrap 3.3.7 -->
+<script src="lib/bootstrap.min.js"></script>
+
+</body>
+</html>
